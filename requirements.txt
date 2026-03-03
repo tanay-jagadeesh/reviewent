@@ -1,0 +1,11 @@
+# Backend dependencies
+fastapi
+uvicorn[standard]
+anthropic
+pygithub
+httpx
+sqlalchemy[asyncio]
+aiosqlite
+alembic
+pydantic-settings
+python-dotenv

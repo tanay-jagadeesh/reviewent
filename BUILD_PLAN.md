@@ -234,8 +234,7 @@ The system prompt stays identical across all file chunks in a single PR review. 
 
 - **Large diffs**: Chunk by file, skip auto-generated files (lockfiles, `.min.js`, build output). For very large files, summarize instead of sending the full content.
 - **GitHub rate limits**: Batch comment posting into a single review submission (not one API call per comment). Use `create_pull_request_review` not individual comment POSTs.
-- **Token limits**: Track token usage per chunk. If a file + context exceeds limits, truncate context first, then summarize the diff.
-- **Webhook security**: Verify the `X-Hub-Signature-256` header on every webhook. Never trust unverified payloads.
+- **Token limits**: Track token usage per chunk. If a file + context exceeds limits, truncate context firs*: Verify the `X-Hub-Signature-256` header on every webhook. Never trust unverified payloads.
 - **Idempotency**: If a PR is updated (new push), don't duplicate reviews. Either update the existing review or dismiss the old one.
 - **Cost control**: Use Sonnet for most files, only escalate to Opus for security-critical or complex logic files. Track per-review cost.
 
