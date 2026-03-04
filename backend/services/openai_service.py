@@ -41,6 +41,10 @@ Diff:
     )
 
     raw = response.choices[0].message.content
+    raw = raw.strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1]
+        raw = raw.rsplit("```", 1)[0]
     comments = json.loads(raw)
 
     return [ReviewComment(**c) for c in comments]

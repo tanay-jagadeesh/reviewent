@@ -52,4 +52,5 @@ def post_review(owner, repo, pr_num, comments):
         body["comments"].append(formatted)
 
     response = requests.post(url = api_url, headers = headers, json = body)
+    return response.json()
 
