@@ -16,6 +16,7 @@ class Review(Base):
     pr_number = Column(Integer, nullable=False)
     status = Column(String, default="pending")  # pending | in_progress | completed | failed
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    completed_at = Column(DateTime, nullable=True)
 
     comments = relationship("ReviewComment", back_populates="review", cascade="all, delete-orphan")
 

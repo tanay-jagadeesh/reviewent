@@ -46,6 +46,7 @@ export interface ReviewSummary {
   pr_url: string;
   status: string;
   created_at: string | null;
+  completed_at: string | null;
   comment_count: number;
 }
 

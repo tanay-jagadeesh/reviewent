@@ -1,6 +1,7 @@
 # Review endpoints — trigger, fetch, list history
 import asyncio
 import logging
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -61,6 +62,7 @@ async def trigger_review(body: TriggerRequest, db: AsyncSession = Depends(get_db
             db.add(db_comment)
 
         review.status = "completed"
+        review.completed_at = datetime.now(timezone.utc)
         await db.commit()
     except Exception as e:
         logger.exception("Review failed: %s", e)
@@ -79,6 +81,7 @@ async def list_reviews(db: AsyncSession = Depends(get_db)):
             Review.pr_url,
             Review.status,
             Review.created_at,
+            Review.completed_at,
             func.count(ReviewComment.id).label("comment_count"),
         )
         .outerjoin(ReviewComment)
@@ -92,6 +95,7 @@ async def list_reviews(db: AsyncSession = Depends(get_db)):
             "pr_url": r.pr_url,
             "status": r.status,
             "created_at": r.created_at.isoformat() if r.created_at else None,
+            "completed_at": r.completed_at.isoformat() if r.completed_at else None,
             "comment_count": r.comment_count,
         }
         for r in rows

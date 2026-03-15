@@ -1,1 +1,59 @@
 @import "tailwindcss";
+
+@theme {
+  --color-accent-50: oklch(0.97 0.02 260);
+  --color-accent-100: oklch(0.93 0.04 260);
+  --color-accent-200: oklch(0.87 0.08 260);
+  --color-accent-300: oklch(0.78 0.12 260);
+  --color-accent-400: oklch(0.68 0.16 260);
+  --color-accent-500: oklch(0.58 0.19 260);
+  --color-accent-600: oklch(0.50 0.19 260);
+  --color-accent-700: oklch(0.44 0.17 260);
+  --color-accent-800: oklch(0.37 0.14 260);
+  --color-accent-900: oklch(0.30 0.11 260);
+  --color-accent-950: oklch(0.22 0.08 260);
+
+  --color-surface-0: oklch(1.0 0 0);
+  --color-surface-50: oklch(0.985 0.002 260);
+  --color-surface-100: oklch(0.97 0.004 260);
+  --color-surface-200: oklch(0.93 0.006 260);
+
+  --color-sidebar: oklch(0.16 0.015 260);
+  --color-sidebar-hover: oklch(0.22 0.02 260);
+  --color-sidebar-text: oklch(0.65 0.02 260);
+  --color-sidebar-text-active: oklch(0.95 0.01 260);
+}
+
+/* Smooth transitions globally */
+*, *::before, *::after {
+  transition-property: color, background-color, border-color, box-shadow, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Better focus rings */
+:focus-visible {
+  outline: 2px solid var(--color-accent-500);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.8 0 0);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.65 0 0);
+}
+
+/* Selection color */
+::selection {
+  background: var(--color-accent-200);
+  color: var(--color-accent-900);
+}
