@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.db.database import init_db
-from backend.routers import webhooks, reviews, auth, feedback, settings
+from backend.routers import webhooks, reviews, auth, feedback, settings, patterns, drift
 
 
 @asynccontextmanager
@@ -28,6 +28,8 @@ app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(feedback.router, prefix="/feedback", tags=["feedback"])
 app.include_router(settings.router, prefix="/settings", tags=["settings"])
+app.include_router(patterns.router, prefix="/patterns", tags=["patterns"])
+app.include_router(drift.router, prefix="/drift", tags=["drift"])
 
 
 @app.get("/")

@@ -28,8 +28,9 @@ class ReviewComment(Base):
     file = Column(String, nullable=False)
     line = Column(Integer)
     severity = Column(String)  # critical | warning | suggestion | nitpick
-    category = Column(String)  # security | bug | performance | style | logic
+    category = Column(String)  # security | bug | performance | style | logic | convention
     comment = Column(Text)
     suggestion = Column(Text)
+    reproduction = Column(Text, nullable=True)  # how to trigger the bug / why it breaks
 
     review = relationship("Review", back_populates="comments")

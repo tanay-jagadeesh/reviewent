@@ -20,9 +20,11 @@ class ReviewComment(BaseModel):
     category: str
     comment: str
     suggestion: str
+    reproduction: str | None = None  # how to trigger the bug / why it breaks
 
-def review_file(file_diff: FileDiff) -> list[ReviewComment]:
- 
+
+def review_file(file_diff: FileDiff, repo_patterns: list[dict] | None = None) -> list[ReviewComment]:
+
     user_message = f"""Review this diff for {file_diff.filename}:
 
 Changed lines: {file_diff.changed_lines}
@@ -30,6 +32,16 @@ Change type: {file_diff.change_type}
 
 Diff:
 {file_diff.diff_content}"""
+
+    # Inject learned repo patterns into the prompt
+    if repo_patterns:
+        patterns_text = "\n".join(
+            f"- [{p['category']}] {p['pattern']}" for p in repo_patterns
+        )
+        user_message += f"""
+
+This repository has the following established conventions. Flag violations of these patterns:
+{patterns_text}"""
 
     response = client.chat.completions.create(
         model="gpt-4o",

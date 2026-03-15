@@ -10,6 +10,24 @@ export interface ReviewComment {
   category: string;
   comment: string;
   suggestion: string;
+  reproduction: string | null;
+}
+
+export interface RepoPattern {
+  id: number;
+  pattern: string;
+  category: string;
+  source_file: string | null;
+  occurrences: number;
+  last_seen_at: string | null;
+}
+
+export interface DriftData {
+  owner: string;
+  repo: string;
+  breakdown: { category: string; severity: string; count: number }[];
+  timeline: { review_id: number; pr_number: number; created_at: string | null; issue_count: number }[];
+  hot_files: { file: string; count: number }[];
 }
 
 export interface Review {
@@ -83,5 +101,19 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(settings),
     });
+  },
+
+  getPatterns(owner: string, repo: string) {
+    return request<RepoPattern[]>(`/patterns/${owner}/${repo}`);
+  },
+
+  deletePattern(patternId: number) {
+    return request<{ ok: boolean }>(`/patterns/${patternId}`, {
+      method: "DELETE",
+    });
+  },
+
+  getDrift(owner: string, repo: string) {
+    return request<DriftData>(`/drift/${owner}/${repo}`);
   },
 };

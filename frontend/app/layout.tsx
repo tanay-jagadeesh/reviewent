@@ -22,6 +22,12 @@ export default function RootLayout({
             <a href="/" className="hover:text-neutral-900">
               Dashboard
             </a>
+            <a href="/drift" className="hover:text-neutral-900">
+              Drift
+            </a>
+            <a href="/patterns" className="hover:text-neutral-900">
+              Patterns
+            </a>
             <a href="/settings" className="hover:text-neutral-900">
               Settings
             </a>

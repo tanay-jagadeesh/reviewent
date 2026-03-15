@@ -12,7 +12,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     setLoading(true);
-    api.getHistory().then(setReviews).finally(() => setLoading(false));
+    api
+      .getHistory()
+      .then(setReviews)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   async function handleTrigger(e: React.FormEvent) {

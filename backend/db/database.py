@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from backend.models.review import Base
 import backend.models.feedback  # noqa: F401 — register table
 import backend.models.user  # noqa: F401 — register table
+import backend.models.pattern  # noqa: F401 — register table
 
 load_dotenv()
 

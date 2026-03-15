@@ -56,6 +56,7 @@ async def trigger_review(body: TriggerRequest, db: AsyncSession = Depends(get_db
                 category=c.category if hasattr(c, "category") else c.get("category", ""),
                 comment=c.comment if hasattr(c, "comment") else c.get("comment", ""),
                 suggestion=c.suggestion if hasattr(c, "suggestion") else c.get("suggestion", ""),
+                reproduction=c.reproduction if hasattr(c, "reproduction") else c.get("reproduction"),
             )
             db.add(db_comment)
 
@@ -124,6 +125,7 @@ async def get_review(review_id: int, db: AsyncSession = Depends(get_db)):
                 "category": c.category,
                 "comment": c.comment,
                 "suggestion": c.suggestion,
+                "reproduction": c.reproduction,
             }
             for c in review.comments
         ],

@@ -29,6 +29,12 @@ export default function ReviewComment({ comment, reviewId }: Props) {
         </span>
       </div>
       <p className="text-sm mb-2">{comment.comment}</p>
+      {comment.reproduction && (
+        <div className="bg-red-50 border border-red-100 rounded p-3 mb-2">
+          <p className="text-xs text-red-400 mb-1">Why this breaks</p>
+          <p className="text-sm">{comment.reproduction}</p>
+        </div>
+      )}
       {comment.suggestion && (
         <div className="bg-neutral-50 border border-neutral-200 rounded p-3 mb-2">
           <p className="text-xs text-neutral-500 mb-1">Suggestion</p>
