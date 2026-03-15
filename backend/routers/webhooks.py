@@ -1,4 +1,5 @@
 # GitHub webhook receiver — verify signature, dispatch review jobs
+import asyncio
 import hashlib
 import hmac
 import os
@@ -69,7 +70,7 @@ async def github_webhook(
         review.status = "in_progress"
         await db.commit()
 
-        comments = run_review(pr_url)
+        comments = await asyncio.to_thread(run_review, pr_url)
 
         for c in comments:
             db.add(ReviewComment(

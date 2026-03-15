@@ -1,4 +1,7 @@
 # Review endpoints — trigger, fetch, list history
+import asyncio
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select, func
@@ -9,6 +12,8 @@ from backend.db.database import get_db
 from backend.models.review import Review, ReviewComment
 from backend.services.github_service import parse_pr_url
 from backend.services.review_agent import run_review
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -38,7 +43,8 @@ async def trigger_review(body: TriggerRequest, db: AsyncSession = Depends(get_db
         review.status = "in_progress"
         await db.commit()
 
-        comments = run_review(body.pr_url)
+        # Run sync review in a thread so we don't block the event loop
+        comments = await asyncio.to_thread(run_review, body.pr_url)
 
         # Save comments to DB
         for c in comments:
@@ -55,10 +61,11 @@ async def trigger_review(body: TriggerRequest, db: AsyncSession = Depends(get_db
 
         review.status = "completed"
         await db.commit()
-    except Exception:
+    except Exception as e:
+        logger.exception("Review failed: %s", e)
         review.status = "failed"
         await db.commit()
-        raise HTTPException(status_code=500, detail="Review failed")
+        raise HTTPException(status_code=500, detail=str(e))
 
     return {"review_id": review.id, "status": review.status}
 

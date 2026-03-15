@@ -17,6 +17,8 @@ def run_review(pr_url: str) -> list[ReviewComment]:
     for file_diff in file_diffs:
         comments = review_file(file_diff)
         all_comments.extend(comments)
-    post = post_review(owner, repo, pr_num, all_comments)
-    
-    return post
+
+    if all_comments:
+        post_review(owner, repo, pr_num, all_comments)
+
+    return all_comments
