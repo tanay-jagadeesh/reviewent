@@ -27,7 +27,9 @@ def gather_context(owner: str, repo: str, file_diff: FileDiff, ref: str = "main"
 
     # Fetch the full file content for context (skip for deleted files)
     if file_diff.change_type != "deleted":
-        context["full_file"] = fetch_file_content(owner, repo, file_diff.filename, ref)
+        content = fetch_file_content(owner, repo, file_diff.filename, ref)
+        if not content.startswith("File not found") and not content.startswith("Error"):
+            context["full_file"] = content
 
     # Try to find corresponding test file
     if file_diff.change_type != "deleted":
@@ -39,7 +41,7 @@ def gather_context(owner: str, repo: str, file_diff: FileDiff, ref: str = "main"
 
 
 def should_skip_file(filename: str) -> bool:
-    """Check if a file should be skipped entirely (auto-generated, migrations, etc.)."""
+    """Check if a file should be skipped entirely."""
     skip_patterns = [
         "migrations/", "generated/", "__generated__",
         ".pb.go", ".lock", "dist/", "build/",

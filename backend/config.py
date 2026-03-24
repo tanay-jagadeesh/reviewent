@@ -1,4 +1,4 @@
-"""Config management — ~/.cr/config.toml"""
+"""Config management — layered: defaults → ~/.cr/config.toml → .cr.toml → env vars"""
 
 import os
 import sys
@@ -17,21 +17,51 @@ DEFAULTS = {
 }
 
 
+def _load_toml(path: Path) -> dict:
+    """Load a TOML file, returning {} if it doesn't exist."""
+    if not path.exists():
+        return {}
+    if sys.version_info >= (3, 12):
+        import tomllib
+    else:
+        import tomli as tomllib
+    with open(path, "rb") as f:
+        return tomllib.load(f)
+
+
+def load_project_config() -> dict:
+    """Load .cr.toml from the current directory (or parents up to root)."""
+    cwd = Path.cwd()
+    for d in [cwd, *cwd.parents]:
+        cr_toml = d / ".cr.toml"
+        if cr_toml.exists():
+            return _load_toml(cr_toml)
+    return {}
+
+
 def load_config() -> dict:
-    """Load config from ~/.cr/config.toml, falling back to env vars and defaults."""
+    """Load config with layered precedence: defaults → user → project → env."""
     cfg = dict(DEFAULTS)
 
-    # Layer 1: config file
-    if CONFIG_PATH.exists():
-        if sys.version_info >= (3, 12):
-            import tomllib
-        else:
-            import tomli as tomllib
-        with open(CONFIG_PATH, "rb") as f:
-            file_cfg = tomllib.load(f)
-        cfg.update(file_cfg)
+    # Layer 1: user config (~/.cr/config.toml)
+    user_cfg = _load_toml(CONFIG_PATH)
+    cfg.update(user_cfg)
 
-    # Layer 2: env vars override file
+    # Layer 2: project config (.cr.toml) — review/ignore sections are flattened
+    proj = load_project_config()
+    review_cfg = proj.get("review", {})
+    if review_cfg.get("model"):
+        cfg["model"] = review_cfg["model"]
+    if review_cfg.get("rules"):
+        cfg["custom_rules"] = review_cfg["rules"]
+    if review_cfg.get("language"):
+        cfg["language"] = review_cfg["language"]
+    if review_cfg.get("fail_on"):
+        cfg["fail_on"] = review_cfg["fail_on"]
+    if proj.get("ignore", {}).get("paths"):
+        cfg["ignore_paths"] = proj["ignore"]["paths"]
+
+    # Layer 3: env vars override everything
     env_map = {
         "OPENAI_API_KEY": "openai_api_key",
         "ANTHROPIC_API_KEY": "anthropic_api_key",

@@ -1,7 +1,14 @@
 # Parse unified diffs — chunk by file, extract line numbers, filter noise
 from pydantic import BaseModel
 import fnmatch
-import re 
+import re
+
+DEFAULT_IGNORE = [
+    "package-lock.json", "poetry.lock", "yarn.lock", "pnpm-lock.yaml",
+    "*.min.js", "*.min.css", "*.png", "*.jpg", "*.ico", "*.svg",
+    "*.pb.go", "*.generated.*", "*.map",
+]
+
 
 class FileDiff(BaseModel):
     filename: str
@@ -9,8 +16,9 @@ class FileDiff(BaseModel):
     diff_content: str
     changed_lines: list[int]
 
-    def parse_diff(raw_diff: str) -> list["FileDiff"]:
-        not_reqs = ["package-lock.json", "poetry.lock", "yarn.lock", "*.min.js", "*.min.css", "*.png", "*.jpg", "*ico", "*.pb.go", "*.generated.*"]
+    @staticmethod
+    def parse_diff(raw_diff: str, extra_ignore: list[str] | None = None) -> list["FileDiff"]:
+        ignore_patterns = DEFAULT_IGNORE + (extra_ignore or [])
 
         chunks = raw_diff.split('diff --git')
         chunks = [chunk for chunk in chunks if chunk.strip()]
@@ -34,17 +42,19 @@ class FileDiff(BaseModel):
                 elif line.startswith('@@'):
                     changed_lines += parse_hunk(line)
 
-            if any(fnmatch.fnmatch(filename, non_req) for non_req in not_reqs):
+            if any(fnmatch.fnmatch(filename, pat) for pat in ignore_patterns):
                 continue
 
-            results.append(FileDiff(
-                filename=filename,
-                change_type=change_type,
-                diff_content=chunk,
-                changed_lines=changed_lines,
-            ))
+            if filename:
+                results.append(FileDiff(
+                    filename=filename,
+                    change_type=change_type,
+                    diff_content=chunk,
+                    changed_lines=changed_lines,
+                ))
 
         return results
+
 
 def parse_hunk(line):
     pattern = r'\+(\d+),(\d+)'
@@ -53,8 +63,6 @@ def parse_hunk(line):
     if match:
         start = int(match.group(1))
         count = int(match.group(2))
-
-        changed = list(range(start, start + count))
-        return changed
+        return list(range(start, start + count))
 
     return []
