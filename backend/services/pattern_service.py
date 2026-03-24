@@ -1,23 +1,36 @@
 # Pattern service — load repo conventions and learn new ones from reviews
+# Gracefully degrades when no database is available (CLI-only mode)
+
 from datetime import datetime, timezone
-from sqlalchemy import select, create_engine
-from sqlalchemy.orm import Session
-from backend.models.pattern import CodebasePattern
 
-# Sync engine for use in sync review pipeline
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./reviews.db")
-# Strip async driver prefix for sync access
-SYNC_URL = DATABASE_URL.replace("+aiosqlite", "")
-sync_engine = create_engine(SYNC_URL)
+def _get_session():
+    """Try to create a sync DB session. Returns None if DB isn't available."""
+    try:
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session
+        import os
+        from dotenv import load_dotenv
+
+        load_dotenv()
+        db_url = os.getenv("DATABASE_URL", "sqlite:///./reviews.db")
+        sync_url = db_url.replace("+aiosqlite", "")
+        engine = create_engine(sync_url)
+        return Session(engine)
+    except Exception:
+        return None
 
 
 def load_patterns(owner: str, repo: str) -> list[dict]:
-    """Load learned conventions for a repo, sorted by frequency."""
-    with Session(sync_engine) as session:
+    """Load learned conventions for a repo. Returns [] if no DB."""
+    session = _get_session()
+    if not session:
+        return []
+
+    try:
+        from sqlalchemy import select
+        from backend.models.pattern import CodebasePattern
+
         result = session.execute(
             select(CodebasePattern)
             .where(CodebasePattern.owner == owner, CodebasePattern.repo == repo)
@@ -29,20 +42,29 @@ def load_patterns(owner: str, repo: str) -> list[dict]:
             {"category": p.category, "pattern": p.pattern, "source_file": p.source_file}
             for p in patterns
         ]
+    except Exception:
+        return []
+    finally:
+        session.close()
 
 
 def learn_patterns(owner: str, repo: str, comments: list) -> None:
-    """Extract convention-related comments and save/update as repo patterns."""
+    """Extract convention comments and save as repo patterns. No-op without DB."""
     convention_comments = [
         c for c in comments if getattr(c, "category", "") == "convention"
     ]
-
     if not convention_comments:
         return
 
-    with Session(sync_engine) as session:
+    session = _get_session()
+    if not session:
+        return
+
+    try:
+        from sqlalchemy import select
+        from backend.models.pattern import CodebasePattern
+
         for comment in convention_comments:
-            # Check if a similar pattern already exists
             existing = session.execute(
                 select(CodebasePattern).where(
                     CodebasePattern.owner == owner,
@@ -65,3 +87,7 @@ def learn_patterns(owner: str, repo: str, comments: list) -> None:
                 ))
 
         session.commit()
+    except Exception:
+        pass
+    finally:
+        session.close()

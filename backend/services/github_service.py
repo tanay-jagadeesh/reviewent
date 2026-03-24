@@ -1,56 +1,49 @@
-# GitHub API — fetch PR diffs, post inline review comments, verify webhook signatures
-from dotenv import load_dotenv
-import requests 
-import os
+# GitHub API — fetch PR diffs, post inline review comments
+import requests
+from backend.config import load_config
 
-load_dotenv()
-url = "https://api.github.com"
+API_URL = "https://api.github.com"
 
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-headers = {
-    "Authorization": f"token {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github.v3+json"
-}
+def _headers(accept: str = "application/vnd.github.v3+json") -> dict:
+    config = load_config()
+    token = config.get("github_token", "")
+    h = {"Accept": accept}
+    if token:
+        h["Authorization"] = f"token {token}"
+    return h
 
-def parse_pr_url(pr_url):
-    parse = pr_url.split("/")
 
-    owner = parse[3]
-    repo = parse[4]
-    pr_num = parse[6]
-
+def parse_pr_url(pr_url: str) -> tuple[str, str, str]:
+    parts = pr_url.rstrip("/").split("/")
+    owner = parts[3]
+    repo = parts[4]
+    pr_num = parts[6]
     return owner, repo, pr_num
 
-def fetch_diff(owner, repo, pr_num):
-    api_url = url + f"/repos/{owner}/{repo}/pulls/{pr_num}"
 
-    headers = {
-    "Authorization": f"token {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github.v3.diff"
-}
-
-    response = requests.get(url = api_url, headers = headers)
-
+def fetch_diff(owner: str, repo: str, pr_num: str) -> str:
+    api_url = f"{API_URL}/repos/{owner}/{repo}/pulls/{pr_num}"
+    response = requests.get(url=api_url, headers=_headers("application/vnd.github.v3.diff"))
+    response.raise_for_status()
     return response.text
 
-def post_review(owner, repo, pr_num, comments):
-    api_url = url + f"/repos/{owner}/{repo}/pulls/{pr_num}/reviews"
+
+def post_review(owner: str, repo: str, pr_num: str, comments: list) -> dict:
+    api_url = f"{API_URL}/repos/{owner}/{repo}/pulls/{pr_num}/reviews"
 
     body = {
-        "event": "COMMENT", 
-        "comments": []
+        "event": "COMMENT",
+        "comments": [
+            {
+                "path": c.file,
+                "line": c.line,
+                "body": f"**[{c.severity}]** {c.category}: {c.comment}\n\n> Suggestion: {c.suggestion}",
+            }
+            for c in comments
+        ],
     }
 
-    for comment in comments: 
-        formatted = {
-            "path": comment.file, 
-            "line": comment.line, 
-            "body": f"[{comment.severity}] {comment.category}: {comment.comment}\n\nSuggestion: {comment.suggestion}"
-        }
-    
-        body["comments"].append(formatted)
-
-    response = requests.post(url = api_url, headers = headers, json = body)
+    response = requests.post(url=api_url, headers=_headers(), json=body)
+    response.raise_for_status()
     return response.json()
-
